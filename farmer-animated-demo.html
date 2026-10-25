@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sell Smart: animated demo</title>
+<style>
+:root{--bg:#f6f7f2;--ink:#22302a;--mute:#5d6b63;--card:#fff;--line:#d9ded3;--green:#1f6b45;--greenbg:#e1f1e6;--red:#a63a2b;--sky:#e8f0ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--ink:#e8ede6;--mute:#9aa89f;--card:#1d2620;--line:#2f3b33;--green:#6fcf97;--greenbg:#1f3a2a;--red:#ef8a7a;--sky:#1a241e}}
+:root[data-theme="dark"]{--bg:#141a16;--ink:#e8ede6;--mute:#9aa89f;--card:#1d2620;--line:#2f3b33;--green:#6fcf97;--greenbg:#1f3a2a;--red:#ef8a7a;--sky:#1a241e}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font:700 1.6rem/1.2 Georgia,serif;margin:0 0 4px}
+p.sub{color:var(--mute);margin:0 0 16px}
+.stage{background:var(--sky);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+svg{display:block;width:100%;height:auto}
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+.fade{opacity:0;transition:opacity .6s}
+.fade.on{opacity:1}
+#truck{transition:transform 2.4s ease-in-out}
+.tag rect{fill:var(--card);stroke:var(--line)}
+.tag.win rect{fill:var(--greenbg);stroke:var(--green);stroke-width:2}
+.cap{min-height:3.2em;margin:14px 0 10px;font-size:1.05rem}
+.panel{display:none;padding:16px;border-radius:8px;background:var(--greenbg);border-left:5px solid var(--green);margin-bottom:14px}
+.panel.on{display:block}
+.panel b{font-size:1.2rem;display:block}
+.panel .neg{color:var(--red)}
+button{font:inherit;font-weight:600;padding:10px 20px;border:0;border-radius:6px;background:var(--green);color:#fff;cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button{color:#0e1a12}}
+:root[data-theme="dark"] button{color:#0e1a12}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){#truck,.fade{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Sell Smart: how it works</h1>
+<p class="sub">A farmer harvests 20 quintals of tomatoes. Where should he sell?</p>
+
+<div class="stage">
+<svg viewBox="0 0 700 300" role="img" aria-label="Animation: a farmer compares a local market and a market 40 km away, then sells where he keeps more money">
+<line x1="40" y1="230" x2="660" y2="230" stroke="#8a7a62" stroke-width="6" stroke-linecap="round"/>
+<g id="farm"><text x="30" y="210" font-size="54">🌾</text><text x="32" y="270" font-size="14">Farm</text></g>
+<g id="local"><text x="215" y="200" font-size="54">🏪</text><text x="205" y="270" font-size="14">Local market</text></g>
+<g id="far"><text x="585" y="200" font-size="54">🏪</text><text x="570" y="270" font-size="14">Market B, 40 km</text></g>
+
+<g id="t1" class="tag fade"><rect x="190" y="70" width="110" height="44" rx="8"/><text x="245" y="98" font-size="20" font-weight="700" text-anchor="middle">₹20,000</text></g>
+<g id="t2" class="tag fade"><rect x="555" y="70" width="110" height="44" rx="8"/><text x="610" y="98" font-size="20" font-weight="700" text-anchor="middle">₹25,000</text></g>
+<g id="cost" class="fade"><text x="400" y="60" font-size="18" text-anchor="middle" style="fill:var(--red)">Transport: − ₹600</text></g>
+
+<g id="truck" style="transform:translate(40px,0)"><text x="0" y="222" font-size="44">🚚</text></g>
+</svg>
+</div>
+
+<div class="cap" id="cap" aria-live="polite">Press play to start.</div>
+
+<div class="panel" id="res">
+<b>Sell at Market B and earn ₹4,400 more</b>
+₹25,000 <span class="neg">− ₹600 transport</span> = <b style="display:inline">₹24,400</b>, compared with ₹20,000 at the local market.
+</div>
+
+<button id="play">Play demo</button>
+</main>
+
+<script>
+var $=function(id){return document.getElementById(id)};
+var timers=[];
+function at(ms,fn){timers.push(setTimeout(fn,ms))}
+function reset(){
+ timers.forEach(clearTimeout);timers=[];
+ ["t1","t2","cost"].forEach(function(i){$(i).classList.remove("on")});
+ $("t2").classList.remove("win");
+ $("truck").style.transform="translate(40px,0)";
+ $("res").classList.remove("on");
+ $("cap").textContent="";
+}
+function play(){
+ reset();
+ $("play").textContent="Replay";
+ $("cap").textContent="Step 1: The harvest is ready. The farmer has 20 quintals of tomatoes.";
+ at(2500,function(){
+  $("t1").classList.add("on");
+  $("cap").textContent="Step 2: The local market offers ₹20,000. Most farmers stop here.";
+ });
+ at(5500,function(){
+  $("t2").classList.add("on");
+  $("cap").textContent="Step 3: Sell Smart shows that Market B, 40 km away, offers ₹25,000.";
+ });
+ at(8500,function(){
+  $("cap").textContent="Step 4: But the truck costs money. Sell Smart subtracts the transport cost.";
+  $("truck").style.transform="translate(520px,0)";
+ });
+ at(9500,function(){$("cost").classList.add("on")});
+ at(12000,function(){
+  $("t2").classList.add("win");
+  $("res").classList.add("on");
+  $("cap").textContent="Step 5: After transport, Market B still pays more. The farmer chooses it.";
+ });
+}
+$("play").addEventListener("click",play);
+</script>
+</body>
+</html>

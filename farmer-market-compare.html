@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sell Smart: compare markets after transport</title>
+<style>
+:root{--bg:#f6f7f2;--ink:#22302a;--mute:#5d6b63;--card:#fff;--line:#d9ded3;--green:#1f6b45;--greenbg:#e1f1e6;--red:#a63a2b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--ink:#e8ede6;--mute:#9aa89f;--card:#1d2620;--line:#2f3b33;--green:#6fcf97;--greenbg:#1f3a2a;--red:#ef8a7a}}
+:root[data-theme="dark"]{--bg:#141a16;--ink:#e8ede6;--mute:#9aa89f;--card:#1d2620;--line:#2f3b33;--green:#6fcf97;--greenbg:#1f3a2a;--red:#ef8a7a}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font:700 1.7rem/1.2 Georgia,serif;margin:0 0 4px}
+p.sub{color:var(--mute);margin:0 0 20px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:4px;flex:1;min-width:130px}
+input,select{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);width:100%}
+input:focus-visible,select:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:.92rem}
+th{color:var(--mute);font-weight:600}
+td input{padding:6px 8px;width:92px}
+td.name input{width:130px}
+tr:last-child td{border-bottom:0}
+tr.best td{background:var(--greenbg)}
+.net{font-weight:700}
+.verdict{margin:18px 0 8px;padding:16px;border-radius:8px;background:var(--greenbg);border-left:5px solid var(--green)}
+.verdict b{font-size:1.15rem;display:block;margin-bottom:2px}
+.verdict.none{background:var(--card);border-color:var(--line)}
+.neg{color:var(--red)}
+small{color:var(--mute)}
+</style>
+</head>
+<body>
+<main>
+<h1>Sell Smart</h1>
+<p class="sub">Compare nearby markets after transport cost, and see where your crop earns the most.</p>
+
+<div class="row">
+<label>Crop
+<select id="crop">
+<option value="tomato">Tomato</option>
+<option value="onion">Onion</option>
+<option value="paddy">Paddy</option>
+</select></label>
+<label>Quantity (quintals)
+<input id="qty" type="number" min="1" value="20"></label>
+<label>Truck cost per km (₹)
+<input id="rate" type="number" min="0" value="15"></label>
+</div>
+
+<div class="scroll"><table>
+<thead><tr><th>Market</th><th>Price per quintal (₹)</th><th>Distance (km)</th><th>Sale amount</th><th>Transport</th><th>You keep</th></tr></thead>
+<tbody id="rows"></tbody>
+</table></div>
+
+<div id="verdict" class="verdict" aria-live="polite"></div>
+<small>Prices shown are sample values for the demo. Real prices can be loaded from government mandi data. The first market is treated as your local market.</small>
+</main>
+
+<script>
+var presets={
+tomato:[["Local market",1000,0],["Market B",1250,40],["Market C",1180,10]],
+onion:[["Local market",1400,0],["Market B",1650,50],["Market C",1500,15]],
+paddy:[["Local market",2100,0],["Market B",2300,60],["Market C",2250,20]]
+};
+var markets=[];
+var $=function(id){return document.getElementById(id)};
+function fmt(n){return "₹"+Math.round(n).toLocaleString("en-IN")}
+function load(){markets=presets[$("crop").value].map(function(m){return {name:m[0],price:m[1],dist:m[2]}});draw()}
+function draw(){
+ var tb=$("rows");tb.innerHTML="";
+ markets.forEach(function(m,i){
+  var tr=document.createElement("tr");tr.id="r"+i;
+  tr.innerHTML='<td class="name"><input value="'+m.name+'" data-i="'+i+'" data-k="name" aria-label="Market name"></td>'+
+  '<td><input type="number" min="0" value="'+m.price+'" data-i="'+i+'" data-k="price" aria-label="Price per quintal"></td>'+
+  '<td><input type="number" min="0" value="'+m.dist+'" data-i="'+i+'" data-k="dist" aria-label="Distance in km"></td>'+
+  '<td class="sale"></td><td class="tr"></td><td class="net"></td>';
+  tb.appendChild(tr);
+ });
+ calc();
+}
+function calc(){
+ var q=+$("qty").value||0,rate=+$("rate").value||0,best=-1,bn=-Infinity;
+ var nets=markets.map(function(m,i){
+  var sale=m.price*q,tr=m.dist*rate,net=sale-tr;
+  var row=$("r"+i);
+  row.querySelector(".sale").textContent=fmt(sale);
+  row.querySelector(".tr").textContent=m.dist?"− "+fmt(tr):"₹0";
+  row.querySelector(".net").textContent=fmt(net);
+  if(net>bn){bn=net;best=i}
+  return net;
+ });
+ markets.forEach(function(m,i){$("r"+i).className=i===best?"best":""});
+ var v=$("verdict"),loc=nets[0],gain=bn-loc;
+ if(best===0||gain<=0){
+  v.className="verdict none";
+  v.innerHTML="<b>Sell at "+markets[0].name+"</b>Other markets do not pay more once transport is counted.";
+ }else{
+  v.className="verdict";
+  v.innerHTML="<b>Sell at "+markets[best].name+": earn "+fmt(gain)+" more</b>You keep "+fmt(bn)+" there, compared with "+fmt(loc)+" at "+markets[0].name+".";
+ }
+}
+$("crop").addEventListener("change",load);
+$("qty").addEventListener("input",calc);
+$("rate").addEventListener("input",calc);
+$("rows").addEventListener("input",function(e){
+ var t=e.target,i=t.dataset.i,k=t.dataset.k;if(i===undefined)return;
+ markets[i][k]=k==="name"?t.value:(+t.value||0);calc();
+});
+load();
+</script>
+</body>
+</html>

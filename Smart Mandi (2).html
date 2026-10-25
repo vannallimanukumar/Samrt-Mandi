@@ -1,0 +1,1016 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Smart Mandi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Lora:wght@600;700&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Serif+Telugu:wght@600;700&display=swap">
+<style>
+/* Layout concept: a left rail holds the farmer's load (crop, quintals, district); the right side switches between compare, trucks, buyers and sowing advice. Phone width stacks the rail above the views. */
+:root {
+  --bg: #F2F6EF;
+  --surface: #FFFFFF;
+  --tint: #E8F1E5;
+  --line: #D0DFCB;
+  --ink: #15291B;
+  --muted: #4F6558;
+  --brand: #17532F;
+  --on-brand: #FFFFFF;
+  --primary: #1F6B3A;
+  --on-primary: #FFFFFF;
+  --accent: #F0A93B;
+  --on-accent: #2B1D00;
+  --good: #2E7D32;
+  --good-bg: #DDEEDB;
+  --warn: #D9481F;
+  --warn-bg: #FCE8E1;
+  --focus: #1A5FB4;
+  --font-display: "Lora", "Noto Serif Telugu", Georgia, serif;
+  --font-body: "Lato", "Noto Sans Telugu", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1810; --surface: #15241A; --tint: #1B2F22; --line: #2A4332;
+    --ink: #E7F1E8; --muted: #A3BCAA; --brand: #0F3A22; --on-brand: #FFFFFF;
+    --primary: #4FA864; --on-primary: #07180C; --accent: #F0A93B; --on-accent: #2B1D00;
+    --good: #5DBB63; --good-bg: #1F3A26; --warn: #FF8F6B; --warn-bg: #3A1F16; --focus: #7DB4FF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1810; --surface: #15241A; --tint: #1B2F22; --line: #2A4332;
+  --ink: #E7F1E8; --muted: #A3BCAA; --brand: #0F3A22; --on-brand: #FFFFFF;
+  --primary: #4FA864; --on-primary: #07180C; --accent: #F0A93B; --on-accent: #2B1D00;
+  --good: #5DBB63; --good-bg: #1F3A26; --warn: #FF8F6B; --warn-bg: #3A1F16; --focus: #7DB4FF;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding-block: 0; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Header band */
+.band { background: var(--brand); color: var(--on-brand); }
+.band-in { max-width: 1040px; margin: 0 auto; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #2E7D32; display: grid; place-items: center; color: #fff; }
+.brand h1 { font-size: 22px; font-weight: 700; }
+.brand p { font-size: 13px; opacity: .9; }
+.band-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sample { font-size: 12px; font-weight: 700; letter-spacing: .02em; padding: 4px 10px; border-radius: 999px; background: var(--accent); color: var(--on-accent); }
+.seg { display: inline-flex; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; overflow: hidden; }
+.seg button { background: transparent; border: 0; color: var(--on-brand); padding: 6px 14px; font-weight: 700; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: #fff; color: #17532F; }
+
+/* Page grid */
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 18px 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 860px) { .wrap { grid-template-columns: 320px minmax(0, 1fr); align-items: start; } .rail { position: sticky; top: 16px; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.rail { display: grid; gap: 14px; min-width: 0; }
+.label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.field { min-width: 0; }
+
+.search { display: flex; gap: 8px; }
+.search input { flex: 1; min-width: 0; }
+input[type="text"], input[type="number"], select { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px; }
+.icon-btn { flex: none; width: 44px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--tint); display: grid; place-items: center; color: var(--ink); }
+.icon-btn.live { background: var(--warn); color: #fff; border-color: var(--warn); }
+.status { font-size: 13px; color: var(--muted); min-height: 20px; margin-top: 6px; }
+
+.chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.chip { position: relative; text-align: center; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); padding: 6px 4px; display: flex; align-items: center; justify-content: center; line-height: 1.2; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.chip .dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.legend-pilot { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend-pilot i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.qhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.qhead .label { margin: 0; }
+.seg.alt { border-color: var(--line); }
+.seg.alt button { color: var(--ink); padding: 4px 10px; font-size: 12px; }
+.seg.alt button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 420px) and (max-width: 859px) { .row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.stepper { display: flex; gap: 6px; }
+.stepper button { flex: none; width: 44px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--tint); font-size: 20px; font-weight: 700; }
+.stepper input { text-align: center; font-weight: 700; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.check input { flex: none; width: 22px; height: 22px; margin-top: 1px; accent-color: var(--primary); }
+.note { font-size: 13px; color: var(--muted); }
+
+/* Rates under the crop chips */
+.rates { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.rates .label { margin-bottom: 8px; }
+.rate-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.rate-sum > div { min-width: 0; padding: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--tint); }
+.rate-sum .k { display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.rate-sum b { display: block; font-family: var(--font-display); font-size: 17px; margin-top: 2px; }
+.rate-sum .m { display: block; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.25; }
+.rate-sum .hi b { color: var(--good); }
+.rate-sum .lo b { color: var(--warn); }
+.rate-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rate-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); min-width: 0; }
+.rate-row > div { min-width: 0; }
+.rate-row b { display: block; font-size: 14px; }
+.rate-row .small { display: block; font-size: 12px; }
+.rate-row.top { border-color: var(--accent); border-width: 2px; }
+.rate-val { text-align: right; flex: none; }
+.rate-val b { font-family: var(--font-display); font-size: 18px; }
+
+button.rate-row { width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.rate-row .car { flex: none; color: var(--muted); }
+.rate-row[aria-expanded="true"] .car { transform: rotate(180deg); }
+.rate-list > li { display: grid; gap: 6px; }
+.mkt-detail { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.rng { position: relative; height: 6px; border-radius: 3px; margin: 14px 7px 10px; background: var(--line); }
+.rng i { position: absolute; top: -4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); }
+
+/* How to read the Compare tab */
+.how { background: var(--tint); border: 1px solid var(--line); border-radius: 14px; padding: 0 16px; }
+.how summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.how[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+.how .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 14px; }
+.how .formula { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.how ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.how .ex { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+.how .ex p { overflow-wrap: anywhere; }
+
+/* Tabs */
+.main { min-width: 0; display: grid; gap: 14px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.tab { flex: 1 0 auto; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14px; white-space: nowrap; }
+.tab[aria-selected="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.view { display: grid; gap: 14px; min-width: 0; }
+
+/* Hero result */
+.hero { background: var(--brand); color: var(--on-brand); border-radius: 14px; padding: 18px; border: 1px solid var(--brand); }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.hero h2 { font-size: 24px; margin-top: 4px; }
+.hero .big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 10px; }
+.hero .big b { font-family: var(--font-display); font-size: 40px; line-height: 1; color: var(--accent); }
+.hero .big span { font-size: 14px; opacity: .92; }
+.hero .delta { margin-top: 10px; font-size: 15px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.mk { display: grid; gap: 10px; min-width: 0; }
+.mk-head { display: flex; gap: 10px; align-items: flex-start; }
+.rank { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--tint); display: grid; place-items: center; font-weight: 900; font-size: 14px; }
+.mk.best .rank { background: var(--accent); color: var(--on-accent); }
+.mk.best { border-color: var(--good); border-width: 2px; }
+.mk-title { min-width: 0; flex: 1; }
+.mk-title h3 { font-size: 17px; }
+.mk-meta { font-size: 13px; color: var(--muted); }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.badge { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--tint); }
+.badge.best { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.badge.high { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+.bar { height: 12px; border-radius: 6px; background: var(--tint); overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar .n { background: var(--good); }
+.bar .f { background: var(--warn); }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0; }
+@media (min-width: 560px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stats dt { font-size: 12px; color: var(--muted); }
+.stats dd { margin: 0; font-weight: 700; font-size: 16px; }
+.stats .net dd { color: var(--good); font-size: 18px; }
+.btn { min-height: 44px; border-radius: 10px; border: 0; background: var(--primary); color: var(--on-primary); font-weight: 700; padding: 10px 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.mk-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; justify-content: space-between; }
+.small { font-size: 13px; color: var(--muted); }
+
+/* Trucks */
+.route { display: grid; gap: 12px; }
+.route-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.route-line b { font-family: var(--font-display); font-size: 17px; }
+.arrow { color: var(--muted); }
+.tk { display: grid; gap: 10px; cursor: pointer; }
+.tk[aria-checked="true"] { border: 2px solid var(--primary); }
+.tk[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.tk-head { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.tk h3 { font-size: 16px; }
+.ver { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--good); font-weight: 700; }
+.price { text-align: right; }
+.price b { display: block; font-size: 20px; font-family: var(--font-display); }
+.confirm { display: grid; gap: 12px; }
+.phone { font-weight: 900; letter-spacing: .04em; user-select: all; }
+.ok { border: 2px solid var(--good); background: var(--good-bg); border-radius: 14px; padding: 16px; display: grid; gap: 10px; }
+.ok h2 { font-size: 20px; display: flex; gap: 8px; align-items: center; }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 700; text-align: right; }
+
+/* Buyers */
+.subtabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.subtab { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14px; }
+.subtab[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.by { display: grid; gap: 8px; }
+.by-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.by h3 { font-size: 16px; }
+.plus { color: var(--good); font-weight: 700; font-size: 14px; }
+.empty { border: 1px dashed var(--line); border-radius: 14px; padding: 20px; color: var(--muted); text-align: center; }
+
+/* Advice */
+.rec { background: var(--tint); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 6px; }
+.rec h2 { font-size: 22px; }
+.mbar { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; align-items: center; gap: 10px; font-size: 14px; }
+.mbar .track { height: 18px; border-radius: 4px; background: var(--tint); overflow: hidden; }
+.mbar .track i { display: block; height: 100%; background: var(--good); border-radius: 4px; }
+.mbar.top .track i { background: var(--accent); }
+.mbar b { text-align: right; }
+.crop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding-block: 10px; border-top: 1px solid var(--line); }
+.crop-row:first-child { border-top: 0; }
+.crop-row .nm { font-weight: 700; }
+.risk { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.risk.low { background: var(--good-bg); color: var(--good); }
+.risk.med { background: var(--tint); color: var(--ink); border: 1px solid var(--line); }
+.risk.high { background: var(--warn-bg); color: var(--warn); }
+.callout { background: var(--brand); color: var(--on-brand); border-radius: 14px; padding: 16px; font-size: 15px; border: 1px solid var(--brand); }
+.callout b { color: var(--accent); }
+
+/* Footer */
+.foot { border-top: 1px solid var(--line); }
+.foot-in { max-width: 1040px; margin: 0 auto; padding-block: 22px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .foot-in { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.foot h2 { font-size: 17px; margin-bottom: 8px; }
+.foot ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.foot .team { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) { .bar i { transition: width .35s ease; } }
+</style>
+
+<header class="band">
+  <div class="band-in">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6z"/><path d="M12 11c0-3 2-5 6-5 0 3-2 5-6 5z"/></svg></div>
+      <div>
+        <h1 data-i18n="appName">Smart Mandi</h1>
+        <p data-i18n="tagline">Fair prices for every farmer</p>
+      </div>
+    </div>
+    <div class="band-right">
+      <span class="sample" data-i18n="sampleBadge">Sample data · 24 Oct 2026</span>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-act="lang" data-v="en" aria-pressed="true">EN</button>
+        <button type="button" data-act="lang" data-v="te" aria-pressed="false">తెలుగు</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <aside class="rail">
+    <section class="card" aria-labelledby="loadH">
+      <h2 id="loadH" class="label" data-i18n="yourLoad">Your load</h2>
+
+      <div class="field" style="margin-bottom:14px">
+        <span class="label" data-i18n="district">Your district</span>
+        <div class="chips" id="dists" role="group" aria-label="District"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="q" data-i18n="searchLbl">Find a crop</label>
+        <div class="search">
+          <input type="text" id="q" autocomplete="off" data-i18n-ph="searchPh" placeholder="Type or speak a crop name">
+          <button type="button" class="icon-btn" id="mic" data-act="mic" data-i18n-aria="voice" aria-label="Voice search">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          </button>
+        </div>
+        <p class="status" id="vstatus" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="field" style="margin-top:8px">
+        <span class="label" id="cropsLabel"></span>
+        <div class="chips" id="chips"></div>
+        <p class="legend-pilot"><i></i><span data-i18n="pilotLegend">Pilot crop</span></p>
+      </div>
+
+      <div id="rates" class="rates" aria-live="polite"></div>
+
+      <div style="margin-top:14px">
+        <div class="field">
+          <div class="qhead">
+            <label class="label" for="qty" data-i18n="qty">Quantity</label>
+            <div class="seg alt" role="group" aria-label="Unit">
+              <button type="button" data-act="unit" data-v="q" aria-pressed="true" data-i18n="unitQ">Quintal</button>
+              <button type="button" data-act="unit" data-v="kg" aria-pressed="false" data-i18n="unitKg">Kg</button>
+            </div>
+          </div>
+          <div class="stepper">
+            <button type="button" data-act="qminus" aria-label="−">−</button>
+            <input type="number" id="qty" inputmode="decimal" step="any" value="10">
+            <button type="button" data-act="qplus" aria-label="+">+</button>
+          </div>
+        </div>
+      </div>
+
+      <label class="check" style="margin-top:14px">
+        <input type="checkbox" id="share">
+        <span data-i18n="share">Share the truck with a neighbour and split the freight</span>
+      </label>
+      <p class="note" style="margin-top:12px" data-i18n="pilotNote">Pilot crop is tomato. Other crops show sample rates.</p>
+    </section>
+  </aside>
+
+  <section class="main" id="tabs">
+    <div class="tabs" role="tablist" id="tablist"></div>
+    <div class="view" id="view" role="tabpanel"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <section>
+      <h2 data-i18n="dataTitle">Where the data comes from</h2>
+      <ul>
+        <li data-i18n="d1">Mandi prices: public data from Agmarknet and e-NAM</li>
+        <li data-i18n="d2">Truck rates: quoted by verified owners on the site</li>
+        <li data-i18n="d3">Local gaps: field volunteers record rates at small yards</li>
+        <li data-i18n="d4">Acreage and history: official district reports and past price series</li>
+      </ul>
+    </section>
+    <section>
+      <h2 data-i18n="aboutTitle">About this prototype</h2>
+      <ul>
+        <li data-i18n="a1">Working now: net-profit math, truck booking flow, Telugu.</li>
+        <li data-i18n="a2">Sample for the demo: prices, distances, trucks, buyers.</li>
+        <li data-i18n="a3">Next: live Agmarknet and e-NAM feed, real bookings, UPI payments.</li>
+      </ul>
+    </section>
+    <p class="team" data-i18n="team">Team Rohit · Fair Prices for Every Farmer</p>
+  </div>
+</footer>
+
+<script>
+/*LOGIC*/
+var MARKETS = ['mad', 'ana', 'hin', 'vil'];
+var RATES = {
+  tomato:      { mad: 1850,  ana: 1700,  hin: 1550,  vil: 1250 },
+  groundnut:   { mad: 6400,  ana: 6700,  hin: 6550,  vil: 5900 },
+  banana:      { mad: 2400,  ana: 2250,  hin: 2150,  vil: 1700 },
+  chilli:      { mad: 11800, ana: 11200, hin: 10800, vil: 9800 },
+  ragi:        { mad: 3900,  ana: 4100,  hin: 4000,  vil: 3600 },
+  sweetpotato: { mad: 2600,  ana: 2500,  hin: 2400,  vil: 2000 },
+  orange:      { mad: 4200,  ana: 4500,  hin: 4000,  vil: 3300 },
+  sugarcane:   { mad: 345,   ana: 350,   hin: 340,   vil: 310 },
+  pulses:      { mad: 7200,  ana: 7500,  hin: 7350,  vil: 6800 },
+  leafy:       { mad: 2200,  ana: 2000,  hin: 1900,  vil: 1500 },
+  brinjal:     { mad: 2400,  ana: 2200,  hin: 2100,  vil: 1700 },
+  tobacco:     { mad: 14500, ana: 14200, hin: 13800, vil: 12800 }
+};
+/* freight multiplier by crop: sugarcane moves in bulk haulage, so it costs less per quintal (sample) */
+var FF = { sugarcane: 0.3 };
+/* km and freight for a 10-quintal load from the example village in each district (sample) */
+var ROUTES = {
+  annamayya:   { mad: [52, 4100],  ana: [22, 1200], hin: [28, 1000],  vil: [2, 200] },
+  anantapuram: { mad: [140, 9800], ana: [12, 800],  hin: [105, 7400], vil: [2, 200] },
+  sathyasai:   { mad: [95, 6200],  ana: [70, 4300], hin: [15, 900],   vil: [3, 200] }
+};
+var MARGIN = { tomato: 38, tobacco: 33, chilli: 31, brinjal: 30, orange: 29, leafy: 27, banana: 26, sweetpotato: 24, groundnut: 22, sugarcane: 20, pulses: 18, ragi: 14 };
+var STABILITY = { tomato: 35, tobacco: 70, chilli: 55, brinjal: 45, orange: 60, leafy: 40, banana: 70, sweetpotato: 65, groundnut: 60, sugarcane: 90, pulses: 75, ragi: 85 };
+var GLUT = {
+  annamayya:   { tomato: 80, tobacco: 10, chilli: 35, brinjal: 50, orange: 25, leafy: 45, banana: 30, sweetpotato: 20, groundnut: 40, sugarcane: 15, pulses: 20, ragi: 10 },
+  anantapuram: { tomato: 45, tobacco: 60, chilli: 50, brinjal: 30, orange: 55, leafy: 35, banana: 25, sweetpotato: 15, groundnut: 70, sugarcane: 20, pulses: 40, ragi: 15 },
+  sathyasai:   { tomato: 55, tobacco: 20, chilli: 30, brinjal: 45, orange: 30, leafy: 40, banana: 35, sweetpotato: 25, groundnut: 50, sugarcane: 10, pulses: 30, ragi: 20 }
+};
+var TRUCKS = {
+  annamayya: [
+    { id: 'a1', name: ['Ravi K.', 'రవి కె.'], veh: ['Tata Ace', 'టాటా ఏస్'], cap: 10, km: 2.1, f: 1.0 },
+    { id: 'a2', name: ['Subba Rao', 'సుబ్బారావు'], veh: ['Bolero Pickup', 'బొలేరో పికప్'], cap: 15, km: 4.6, f: 0.95 },
+    { id: 'a3', name: ['Narayana', 'నారాయణ'], veh: ['Eicher', 'ఐషర్'], cap: 40, km: 8.3, f: 0.88 }
+  ],
+  anantapuram: [
+    { id: 'b1', name: ['Mahesh', 'మహేష్'], veh: ['Tata Ace', 'టాటా ఏస్'], cap: 10, km: 1.8, f: 1.0 },
+    { id: 'b2', name: ['Imran', 'ఇమ్రాన్'], veh: ['Bolero Pickup', 'బొలేరో పికప్'], cap: 15, km: 5.2, f: 0.96 },
+    { id: 'b3', name: ['Gopal', 'గోపాల్'], veh: ['Eicher', 'ఐషర్'], cap: 40, km: 9.1, f: 0.9 }
+  ],
+  sathyasai: [
+    { id: 'c1', name: ['Chandra', 'చంద్ర'], veh: ['Tata Ace', 'టాటా ఏస్'], cap: 10, km: 3.0, f: 1.0 },
+    { id: 'c2', name: ['Nagaraju', 'నాగరాజు'], veh: ['Bolero Pickup', 'బొలేరో పికప్'], cap: 15, km: 6.4, f: 0.94 },
+    { id: 'c3', name: ['Basha', 'బాషా'], veh: ['Eicher', 'ఐషర్'], cap: 40, km: 7.7, f: 0.9 }
+  ]
+};
+var DISTRICT_CROPS = {
+  annamayya:   ['tomato', 'groundnut', 'banana', 'orange', 'pulses'],
+  anantapuram: ['groundnut', 'tomato', 'chilli', 'orange', 'banana', 'pulses', 'ragi'],
+  sathyasai:   ['groundnut', 'tomato', 'orange', 'banana', 'pulses', 'sugarcane']
+};
+function r10(n) { return Math.round(n / 10) * 10; }
+function r5(n) { return Math.round(n / 5) * 5; }
+function compute(crop, district, qty, share) {
+  var ff = FF[crop] || 1;
+  var rows = MARKETS.map(function (m) {
+    var rate = RATES[crop][m];
+    var route = ROUTES[district][m];
+    var f10 = route[1] * ff;
+    var gross = Math.round(rate * qty);
+    var freight = r10(f10 * qty / 10);
+    if (share) freight = r10(freight / 2);
+    return { id: m, rate: rate, km: route[0], f10: f10, gross: gross, freight: freight, net: gross - freight };
+  });
+  rows.sort(function (a, b) { return b.net - a.net; });
+  var high = rows.reduce(function (a, b) { return b.rate > a.rate ? b : a; });
+  return { rows: rows, best: rows[0], high: high, delta: rows[0].net - high.net };
+}
+function truckQuotes(crop, district, destId, qty, share) {
+  var f10 = ROUTES[district][destId][1] * (FF[crop] || 1);
+  return TRUCKS[district].map(function (t) {
+    var perQ = r5(f10 / 10 * t.f);
+    var total = r10(perQ * qty);
+    if (share) total = r10(total / 2);
+    return { t: t, perQ: perQ, total: total, fits: t.cap >= qty };
+  });
+}
+function adviceScores(district) {
+  return Object.keys(MARGIN).filter(function (c) { return DISTRICT_CROPS[district].indexOf(c) >= 0; }).map(function (c) {
+    var score = 0.4 * (MARGIN[c] / 38 * 100) + 0.3 * STABILITY[c] + 0.3 * (100 - GLUT[district][c]);
+    return { crop: c, score: Math.round(score), margin: MARGIN[c], stab: STABILITY[c], glut: GLUT[district][c] };
+  }).sort(function (a, b) { return b.score - a.score; });
+}
+function priceRange(crop, m) {
+  var avg = RATES[crop][m];
+  var sp = (100 - STABILITY[crop]) / 100 * 0.35;
+  if (m === 'vil') sp = sp * 0.2;
+  var step = avg < 1000 ? 5 : 10;
+  return { hi: Math.round(avg * (1 + sp) / step) * step, avg: avg, lo: Math.round(avg * (1 - sp) / step) * step };
+}
+/*ENDLOGIC*/
+
+var NAMES = {
+  mad: ['Madanapalle Market', 'మదనపల్లె మార్కెట్'],
+  ana: ['Anantapur Wholesale Market', 'అనంతపురం హోల్‌సేల్ మార్కెట్'],
+  hin: ['Hindupur Market', 'హిందూపురం మార్కెట్'],
+  vil: ['Village trader', 'గ్రామ వ్యాపారి']
+};
+var STATUS = {
+  mad: ['Tier 1 · Active bidding', 'టైర్ 1 · చురుకైన వేలం'],
+  ana: ['Tier 2 · Steady demand', 'టైర్ 2 · స్థిరమైన డిమాండ్'],
+  hin: ['Sub-yard · Moderate volume', 'సబ్-యార్డ్ · మధ్యస్థ పరిమాణం'],
+  vil: ['Nearby · Fixed baseline', 'దగ్గర · స్థిర ధర']
+};
+var SOURCE = {
+  mad: ['Agmarknet', 'అగ్మార్క్‌నెట్'],
+  ana: ['e-NAM', 'e-NAM'],
+  hin: ['Field volunteer', 'క్షేత్ర వాలంటీర్'],
+  vil: ['Farmer report', 'రైతు నివేదిక']
+};
+var CROPS = {
+  tomato:      { n: ['Tomato', 'టమాటా'],             al: ['tomato', 'tomatoes', 'టమాటా', 'టమోటా', 'టొమాటో'] },
+  groundnut:   { n: ['Groundnut', 'వేరుశనగ'],       al: ['groundnut', 'peanut', 'వేరుశనగ', 'వేరుశెనగ'] },
+  banana:      { n: ['Banana', 'అరటి'],              al: ['banana', 'అరటి'] },
+  chilli:      { n: ['Chilli', 'మిరప'],              al: ['chilli', 'chili', 'mirchi', 'మిరప', 'మిర్చి'] },
+  ragi:        { n: ['Ragi', 'రాగులు'],              al: ['ragi', 'finger millet', 'రాగి', 'రాగులు'] },
+  sweetpotato: { n: ['Sweet potato', 'చిలగడదుంప'],   al: ['sweet potato', 'sweet potatoes', 'sweetpotato', 'చిలగడదుంప', 'గెనుసుగడ్డ'] },
+  orange:      { n: ['Sweet orange', 'బత్తాయి'],             al: ['orange', 'oranges', 'sweet orange', 'mosambi', 'నారింజ', 'బత్తాయి'] },
+  sugarcane:   { n: ['Sugarcane', 'చెరకు'],           al: ['sugarcane', 'sugar cane', 'చెరకు'] },
+  pulses:      { n: ['Pulses', 'పప్పుధాన్యాలు'],     al: ['pulses', 'dal', 'red gram', 'పప్పు', 'పప్పుధాన్యాలు', 'కందులు'] },
+  leafy:       { n: ['Leaf vegetables', 'ఆకుకూరలు'], al: ['leaf vegetables', 'leafy', 'leaf', 'greens', 'ఆకుకూరలు', 'ఆకు'] },
+  brinjal:     { n: ['Brinjal', 'వంకాయ'],            al: ['brinjal', 'eggplant', 'aubergine', 'వంకాయ'] },
+  tobacco:     { n: ['Tobacco', 'పొగాకు'],           al: ['tobacco', 'పొగాకు'] }
+};
+var DISTRICTS = {
+  annamayya:   ['Annamayya', 'అన్నమయ్య'],
+  anantapuram: ['Anantapuram', 'అనంతపురం'],
+  sathyasai:   ['Sri Sathya Sai', 'శ్రీ సత్యసాయి']
+};
+var BUYERS = [
+  { id: 'b1', type: 'society',    crop: 'tomato',    name: ['Society A', 'సొసైటీ ఎ'],       place: ['Anantapur', 'అనంతపురం'], demand: ['Weekly, 3 to 4 crates', 'వారానికి 3 నుంచి 4 క్రేట్లు'], price: 1750 },
+  { id: 'b2', type: 'society',    crop: 'tomato',    name: ['Society B', 'సొసైటీ బి'],       place: ['Hindupur', 'హిందూపురం'], demand: ['Weekly, 3 to 4 crates', 'వారానికి 3 నుంచి 4 క్రేట్లు'], price: 1700 },
+  { id: 'b3', type: 'restaurant', crop: 'tomato',    name: ['Restaurant A', 'రెస్టారెంట్ ఎ'], place: ['Anantapur', 'అనంతపురం'], demand: ['Weekly, 5 quintals, price fixed before sowing', 'వారానికి 5 క్వింటాళ్లు, విత్తే ముందే ధర ఖరారు'], price: 1900 },
+  { id: 'b4', type: 'restaurant', crop: 'tomato',    name: ['Restaurant B', 'రెస్టారెంట్ బి'], place: ['Hindupur', 'హిందూపురం'], demand: ['Weekly, 3 quintals, price fixed before sowing', 'వారానికి 3 క్వింటాళ్లు, విత్తే ముందే ధర ఖరారు'], price: 1850 },
+  { id: 'b5', type: 'society',    crop: 'groundnut', name: ['Society C', 'సొసైటీ సి'],       place: ['Anantapur', 'అనంతపురం'], demand: ['Monthly, 2 quintals', 'నెలకు 2 క్వింటాళ్లు'], price: 6900 },
+  { id: 'b6', type: 'society',    crop: 'banana',    name: ['Society D', 'సొసైటీ డి'],       place: ['Hindupur', 'హిందూపురం'], demand: ['Weekly, 1 quintal', 'వారానికి 1 క్వింటాల్'], price: 2350 },
+  { id: 'b7', type: 'restaurant', crop: 'chilli',    name: ['Restaurant C', 'రెస్టారెంట్ సి'], place: ['Anantapur', 'అనంతపురం'], demand: ['Monthly, 2 quintals, price fixed before sowing', 'నెలకు 2 క్వింటాళ్లు, విత్తే ముందే ధర ఖరారు'], price: 12400 },
+  { id: 'b8',  type: 'society',    crop: 'leafy',       name: ['Society E', 'సొసైటీ ఇ'],        place: ['Anantapur', 'అనంతపురం'], demand: ['Weekly, 20 kg', 'వారానికి 20 కిలోలు'], price: 2300 },
+  { id: 'b9',  type: 'restaurant', crop: 'brinjal',     name: ['Restaurant D', 'రెస్టారెంట్ డి'], place: ['Hindupur', 'హిందూపురం'], demand: ['Weekly, 2 quintals, price fixed before sowing', 'వారానికి 2 క్వింటాళ్లు, విత్తే ముందే ధర ఖరారు'], price: 2250 },
+  { id: 'b10', type: 'society',    crop: 'sweetpotato', name: ['Society F', 'సొసైటీ ఎఫ్'],      place: ['Anantapur', 'అనంతపురం'], demand: ['Weekly, 50 kg', 'వారానికి 50 కిలోలు'], price: 2650 },
+  { id: 'b11', type: 'society',    crop: 'orange',      name: ['Society G', 'సొసైటీ జి'],       place: ['Hindupur', 'హిందూపురం'], demand: ['Weekly, 1 quintal', 'వారానికి 1 క్వింటాల్'], price: 4400 },
+  { id: 'b12', type: 'society',    crop: 'brinjal',     name: ['Society H', 'సొసైటీ హెచ్'],     place: ['Anantapur', 'అనంతపురం'], demand: ['Weekly, 30 kg', 'వారానికి 30 కిలోలు'], price: 2300 }
+];
+
+var I = {
+  appName: ['Smart Mandi', 'స్మార్ట్ మండి'],
+  tagline: ['Fair prices for every farmer', 'ప్రతి రైతుకు న్యాయమైన ధర'],
+  sampleBadge: ['Sample data · 24 Oct 2026', 'నమూనా డేటా · 24 అక్టో 2026'],
+  yourLoad: ['Your load', 'మీ పంట వివరాలు'],
+  ratesTitle: ['Markets and rates for {c}', '{c} కోసం మార్కెట్లు, ధరలు'],
+  ratesHint: ['Highest rate is not always the best deal. See Compare for net profit.', 'అత్యధిక ధర ఎప్పుడూ ఉత్తమం కాదు. నికర లాభం కోసం "పోల్చండి" చూడండి.'],
+  cropsHere: ['Crops grown in {d}', '{d}లో పండే పంటలు'],
+  vNotHere: ['{c} is not in the crop list for {d}.', '{d} పంటల జాబితాలో {c} లేదు.'],
+  sumHigh: ['Highest', 'అత్యధికం'],
+  sumAvg: ['Average', 'సగటు'],
+  sumLow: ['Lowest', 'అత్యల్పం'],
+  sumAvgNote: ['of {n} markets', '{n} మార్కెట్ల సగటు'],
+  howTitle: ['How to read this', 'ఇది ఎలా చదవాలి'],
+  howFormula: ['Net take-home = rate × quantity − freight', 'నికర ఆదాయం = ధర × పరిమాణం − రవాణా'],
+  howRank: ['Markets are ranked by net take-home, not by rate. The market with the highest rate is tagged "Highest rate".', 'మార్కెట్లను ధర బట్టి కాకుండా నికర ఆదాయం బట్టి ర్యాంక్ చేశాం. అత్యధిక ధర ఉన్న మార్కెట్‌కు "అత్యధిక ధర" అని ఉంటుంది.'],
+  howBar: ['In each bar, green is what you keep and red is freight.', 'ప్రతి బార్‌లో ఆకుపచ్చ మీ చేతికి వచ్చేది, ఎరుపు రవాణా ఖర్చు.'],
+  howBook: ['Tap "Book truck" on a market to see truck quotes for that trip.', 'ఆ మార్కెట్‌కు ట్రక్కు ధరలు చూడటానికి "ట్రక్కు బుక్ చేయండి" నొక్కండి.'],
+  howFees: ['Market commission and loading fees are not included.', 'మార్కెట్ కమీషన్, లోడింగ్ ఖర్చులు చేర్చలేదు.'],
+  howEx: ['Example with your load', 'మీ పంటతో ఉదాహరణ'],
+  sumAcross: ['Across all markets', 'అన్ని మార్కెట్లలో'],
+  rangeAt: ['Price range at {m}', '{m}లో ధర పరిమితి'],
+  rangeNote: ['Sample low, average and high for the day. Net profit uses the average.', 'ఆ రోజు నమూనా కనిష్ట, సగటు, గరిష్ట ధరలు. నికర లాభం సగటు ధరతో లెక్కిస్తాం.'],
+  tapMarket: ['Tap a market to see its highest, average and lowest price.', 'ఒక మార్కెట్‌ను నొక్కితే దాని అత్యధిక, సగటు, అత్యల్ప ధరలు కనిపిస్తాయి.'],
+  unitQ: ['Quintal', 'క్వింటాల్'],
+  unitKg: ['Kg', 'కిలో'],
+  wQ1: ['quintal', 'క్వింటాల్'],
+  wQn: ['quintals', 'క్వింటాళ్లు'],
+  wKg: ['kg', 'కిలోలు'],
+  ratePerKg: ['Rate / kg', 'కిలో ధర'],
+  perKg: ['per kg', 'కిలోకు'],
+  pilotLegend: ['Pilot crop', 'పైలట్ పంట'],
+  searchLbl: ['Find a crop', 'పంట వెతకండి'],
+  searchPh: ['Type or speak a crop name', 'పంట పేరు టైప్ చేయండి లేదా చెప్పండి'],
+  voice: ['Voice search', 'మాటతో వెతకండి'],
+  crop: ['Crop', 'పంట'],
+  pilot: ['Pilot', 'పైలట్'],
+  sampleRates: ['Sample rates', 'నమూనా ధరలు'],
+  qty: ['Quantity', 'పరిమాణం'],
+  district: ['Your district', 'మీ జిల్లా'],
+  share: ['Share the truck with a neighbour and split the freight', 'పొరుగు రైతుతో ట్రక్కు పంచుకుని రవాణా ఖర్చు సగం చేసుకోండి'],
+  pilotNote: ['Pilot crop is tomato. Other crops show sample rates.', 'పైలట్ పంట టమాటా. ఇతర పంటలకు నమూనా ధరలు చూపిస్తున్నాం.'],
+  tabCompare: ['Compare', 'పోల్చండి'],
+  tabTrucks: ['Trucks', 'ట్రక్కులు'],
+  tabBuyers: ['Buyers', 'కొనుగోలుదారులు'],
+  tabAdvice: ['Sowing advice', 'సాగు సలహా'],
+  bestFor: ['Best for your load', 'మీ పంటకు ఉత్తమమైనది'],
+  takeHome: ['take-home for {q}', '{q} అమ్మితే చేతికి వచ్చేది'],
+  moreThan: ['{x} more than {m}, the highest-rate market.', 'అత్యధిక ధర ఉన్న {m} కంటే {x} ఎక్కువ.'],
+  alsoHighest: ['This market also has the highest rate.', 'ఈ మార్కెట్‌లో ధర కూడా అత్యధికం.'],
+  whyNet: ['Net profit, not gross rate, should pick the market.', 'మార్కెట్‌ను నికర లాభం బట్టి ఎంచుకోండి, మొత్తం ధర బట్టి కాదు.'],
+  legNet: ['Net take-home', 'నికర ఆదాయం'],
+  legFreight: ['Freight', 'రవాణా'],
+  badgeBest: ['Best net profit', 'ఉత్తమ నికర లాభం'],
+  badgeHigh: ['Highest rate', 'అత్యధిక ధర'],
+  lblRate: ['Rate / quintal', 'క్వింటాల్ ధర'],
+  lblGross: ['Gross', 'మొత్తం'],
+  lblFreight: ['Freight (est.)', 'రవాణా (అంచనా)'],
+  lblNet: ['Net take-home', 'నికర ఆదాయం'],
+  km: ['km', 'కి.మీ.'],
+  src: ['Source', 'మూలం'],
+  bookTruck: ['Book truck', 'ట్రక్కు బుక్ చేయండి'],
+  localPickup: ['Local pickup, no truck booking', 'స్థానికంగానే, ట్రక్కు అవసరం లేదు'],
+  freightNote: ['Freight is an estimate from an example village in your district. Live truck-owner quotes appear when you book.', 'రవాణా ఖర్చు మీ జిల్లాలోని ఒక ఉదాహరణ గ్రామం ఆధారంగా అంచనా. బుక్ చేసేటప్పుడు ట్రక్కు యజమానుల అసలు ధరలు కనిపిస్తాయి.'],
+  route: ['Route', 'మార్గం'],
+  from: ['From', 'ఎక్కడి నుంచి'],
+  fromVal: ['Example village, {d}', 'ఉదాహరణ గ్రామం, {d}'],
+  to: ['To', 'ఎక్కడికి'],
+  loadLine: ['{q} of {c}', '{c}: {q}'],
+  nearby: ['Verified trucks within 10 km', '10 కి.మీ. లోపు ధృవీకరించిన ట్రక్కులు'],
+  capacity: ['Capacity', 'సామర్థ్యం'],
+  q: ['q', 'క్వి.'],
+  perQ: ['per quintal', 'క్వింటాల్‌కు'],
+  total: ['Freight total', 'మొత్తం రవాణా'],
+  yourShare: ['Your half of the freight', 'రవాణాలో మీ సగం'],
+  lowest: ['Lowest rate', 'తక్కువ ధర'],
+  tooSmall: ['Too small for {q}', '{q} కోసం ట్రక్కు చిన్నది'],
+  verified: ['ID and vehicle papers checked', 'గుర్తింపు, వాహన పత్రాలు పరిశీలించాం'],
+  away: ['away', 'దూరంలో'],
+  confirmOnline: ['Confirm online', 'ఆన్‌లైన్‌లో నిర్ధారించండి'],
+  callOwner: ['Call the owner', 'యజమానికి ఫోన్ చేయండి'],
+  demoPhone: ['Demo number', 'డెమో నంబర్'],
+  copy: ['Copy', 'కాపీ'],
+  copied: ['Copied', 'కాపీ అయింది'],
+  booked: ['Booking recorded', 'బుకింగ్ నమోదైంది'],
+  bookedNote: ['Demo only. No real booking or message is sent.', 'ఇది డెమో మాత్రమే. నిజమైన బుకింగ్ లేదా సందేశం వెళ్లదు.'],
+  ref: ['Reference', 'రిఫరెన్స్'],
+  truck: ['Truck', 'ట్రక్కు'],
+  freightLbl: ['Freight', 'రవాణా'],
+  payTitle: ['Get paid', 'చెల్లింపు'],
+  payNote: ['Buyer pays on delivery, by UPI or cash.', 'డెలివరీ సమయంలో కొనుగోలుదారు యూపీఐ లేదా నగదుతో చెల్లిస్తారు.'],
+  newBooking: ['Book another', 'మరొకటి బుక్ చేయండి'],
+  society: ['Housing societies', 'హౌసింగ్ సొసైటీలు'],
+  restaurant: ['Restaurants', 'రెస్టారెంట్లు'],
+  introSociety: ['Weekly orders, no market commission. Even 3 or 4 crates qualify.', 'వారానికోసారి ఆర్డర్లు, మార్కెట్ కమీషన్ లేదు. 3 లేదా 4 క్రేట్లు ఉన్నా సరిపోతుంది.'],
+  introRestaurant: ['Chefs order weeks before planting. A price agreed before sowing protects you from a crash.', 'విత్తనానికి వారాల ముందే చెఫ్‌లు ఆర్డర్ ఇస్తారు. విత్తే ముందే ధర ఖరారైతే ధరలు పడిపోయినా నష్టం ఉండదు.'],
+  offer: ['Offer', 'ఆఫర్ ధర'],
+  vsTrader: ['{x} {u} above the village trader', 'గ్రామ వ్యాపారి కంటే {u} {x} ఎక్కువ'],
+  offerBtn: ['Offer my crop', 'నా పంటను అందించండి'],
+  offered: ['Interest noted (demo)', 'ఆసక్తి నమోదైంది (డెమో)'],
+  sampleBuyer: ['Sample listing', 'నమూనా జాబితా'],
+  noBuyers: ['No sample buyers of this type for {c} yet. The pilot starts with tomato.', 'ఈ రకం నమూనా కొనుగోలుదారులు {c} కోసం ఇంకా లేరు. పైలట్ టమాటాతో మొదలవుతుంది.'],
+  adviceTitle: ['Best crop to sow in {d}', '{d}లో విత్తడానికి ఉత్తమ పంట'],
+  adviceWhy: ['Ranked on margin, price stability and glut risk.', 'లాభ శాతం, ధర స్థిరత్వం, ధరలు పడే ప్రమాదం ఆధారంగా ర్యాంక్.'],
+  score: ['Score {s} of 100', '100కి {s} స్కోరు'],
+  marginChart: ['Expected net margin (%), illustrative', 'ఆశించే నికర లాభ శాతం (నమూనా)'],
+  allCrops: ['All crops in {d}', '{d}లో అన్ని పంటలు'],
+  glut: ['Glut risk', 'ధరలు పడే ప్రమాదం'],
+  stability: ['Price stability', 'ధర స్థిరత్వం'],
+  low: ['Low', 'తక్కువ'],
+  med: ['Medium', 'మధ్యస్థం'],
+  high: ['High', 'ఎక్కువ'],
+  glutText: ["The glut problem: when too many farmers in one district sow the same crop, prices crash at the Madanapalle and Kadiri yards. Spreading crops across farmers protects everyone's price.", 'ధరలు పడిపోవడం: ఒకే జిల్లాలో చాలా మంది రైతులు ఒకే పంట వేస్తే మదనపల్లె, కదిరి యార్డుల్లో ధరలు పడిపోతాయి. రైతులు వేర్వేరు పంటలు వేస్తే అందరి ధర కాపాడబడుతుంది.'],
+  scoreNote: ['Sample scoring: margin 40%, price stability 30%, glut risk 30%. All figures illustrative.', 'నమూనా స్కోరింగ్: లాభం 40%, ధర స్థిరత్వం 30%, ప్రమాదం 30%. అన్ని అంకెలు నమూనా మాత్రమే.'],
+  dataTitle: ['Where the data comes from', 'డేటా ఎక్కడి నుంచి'],
+  d1: ['Mandi prices: public data from Agmarknet and e-NAM', 'మండి ధరలు: అగ్మార్క్‌నెట్, e-NAM ప్రజా డేటా'],
+  d2: ['Truck rates: quoted by verified owners on the site', 'ట్రక్కు ధరలు: సైట్‌లో ధృవీకరించిన యజమానులు చెప్పేవి'],
+  d3: ['Local gaps: field volunteers record rates at small yards', 'స్థానిక లోటు: చిన్న యార్డుల ధరలను క్షేత్ర వాలంటీర్లు నమోదు చేస్తారు'],
+  d4: ['Acreage and history: official district reports and past price series', 'విస్తీర్ణం, చరిత్ర: అధికారిక జిల్లా నివేదికలు, గత ధరల వరుస'],
+  aboutTitle: ['About this prototype', 'ఈ ప్రోటోటైప్ గురించి'],
+  a1: ['Working now: net-profit math, truck booking flow, Telugu.', 'ఇప్పుడు పనిచేసేవి: నికర లాభం లెక్క, ట్రక్కు బుకింగ్ విధానం, తెలుగు.'],
+  a2: ['Sample for the demo: prices, distances, trucks, buyers.', 'డెమో కోసం నమూనా: ధరలు, దూరాలు, ట్రక్కులు, కొనుగోలుదారులు.'],
+  a3: ['Next: live Agmarknet and e-NAM feed, real bookings, UPI payments.', 'తర్వాత: ప్రత్యక్ష అగ్మార్క్‌నెట్, e-NAM డేటా, నిజమైన బుకింగ్‌లు, యూపీఐ చెల్లింపులు.'],
+  team: ['Team Rohit · Fair Prices for Every Farmer', 'టీమ్ రోహిత్ · ప్రతి రైతుకు న్యాయమైన ధర'],
+  vUnsupported: ['Voice search is not available here. Type the crop name instead.', 'ఇక్కడ మాటతో వెతకడం పని చేయడం లేదు. పంట పేరు టైప్ చేయండి.'],
+  vListening: ['Listening…', 'వింటున్నాను…'],
+  vNoMatch: ['Did not catch a crop name. Try again.', 'పంట పేరు అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి.'],
+  vSelected: ['Selected {c}.', '{c} ఎంచుకున్నాం.'],
+  vNone: ['No crop matches that. Pick one from the list below.', 'ఆ పేరుతో పంట లేదు. కింది జాబితా నుంచి ఎంచుకోండి.']
+};
+
+var state = { lang: 'en', crop: 'tomato', district: 'annamayya', qty: 10, unit: 'q', share: false, openMarket: 'mad', tab: 'compare', dest: null, truck: null, booked: null, called: false, buyerType: 'society', offered: {}, copied: false };
+
+function L(pair) { return pair[state.lang === 'te' ? 1 : 0]; }
+function t(k, v) {
+  var s = L(I[k] || [k, k]);
+  if (v) Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); });
+  return s;
+}
+function inr(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function $(s) { return document.querySelector(s); }
+function cropName(c) { return L(CROPS[c].n); }
+function distName() { return L(DISTRICTS[state.district]); }
+function fmtNum(n) { return Number(n.toFixed(2)).toLocaleString('en-IN'); }
+function qtyIn() { return state.unit === 'kg' ? Math.round(state.qty * 100) : Number(state.qty.toFixed(2)); }
+function qtyLabel(q) {
+  if (state.unit === 'kg') return Math.round(q * 100).toLocaleString('en-IN') + ' ' + t('wKg');
+  return fmtNum(q) + ' ' + t(q === 1 ? 'wQ1' : 'wQn');
+}
+function inrU(n) {
+  if (state.unit !== 'kg') return inr(n);
+  var v = n / 100;
+  return '₹' + (v >= 100 ? Math.round(v).toLocaleString('en-IN') : v.toFixed(2));
+}
+function rateLbl() { return t(state.unit === 'kg' ? 'ratePerKg' : 'lblRate'); }
+function perUnit() { return t(state.unit === 'kg' ? 'perKg' : 'perQ'); }
+function capText(cap) { return state.unit === 'kg' ? (cap * 100).toLocaleString('en-IN') + ' ' + t('wKg') : cap + ' ' + t('q'); }
+
+var ICON = {
+  truck: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11v10H3z"/><path d="M14 9h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>'
+};
+
+function applyStatic() {
+  document.documentElement.lang = state.lang === 'te' ? 'te' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function (el) { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.querySelectorAll('[data-act="lang"]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.lang)); });
+  renderDists();
+}
+function renderDists() {
+  $('#dists').innerHTML = Object.keys(DISTRICTS).map(function (d) {
+    return '<button type="button" class="chip" data-act="district" data-v="' + d + '" aria-pressed="' + (state.district === d) + '">' + esc(L(DISTRICTS[d])) + '</button>';
+  }).join('');
+}
+function setDistrict(d) {
+  state.district = d; state.truck = null; state.dest = null; resetBooking();
+  if (cropsHere().indexOf(state.crop) < 0) state.crop = cropsHere()[0];
+  say(''); $('#q').value = '';
+  renderDists(); renderChips(); renderRates(); renderView();
+}
+function cropsHere() { return DISTRICT_CROPS[state.district]; }
+function renderChips() {
+  $('#cropsLabel').textContent = t('cropsHere', { d: distName() });
+  $('#chips').innerHTML = cropsHere().map(function (c) {
+    var pilot = c === 'tomato';
+    return '<button type="button" class="chip" data-act="crop" data-v="' + c + '" aria-pressed="' + (state.crop === c) + '"' + (pilot ? ' aria-label="' + esc(cropName(c) + ' · ' + t('pilot')) + '"' : '') + '>' + esc(cropName(c)) + (pilot ? '<i class="dot"></i>' : '') + '</button>';
+  }).join('');
+}
+function renderRates() {
+  var c = state.crop;
+  var rows = MARKETS.slice().sort(function (a, b) { return RATES[c][b] - RATES[c][a]; });
+  var rv = rows.map(function (m) { return RATES[c][m]; });
+  var avg = Math.round(rv.reduce(function (a, b) { return a + b; }, 0) / rv.length);
+  function tiles(hi, av, lo, hs, as, ls) {
+    return '<div class="rate-sum num">' +
+      '<div class="hi"><span class="k">' + esc(t('sumHigh')) + '</span><b>' + inrU(hi) + '</b><span class="m">' + esc(hs) + '</span></div>' +
+      '<div><span class="k">' + esc(t('sumAvg')) + '</span><b>' + inrU(av) + '</b><span class="m">' + esc(as) + '</span></div>' +
+      '<div class="lo"><span class="k">' + esc(t('sumLow')) + '</span><b>' + inrU(lo) + '</b><span class="m">' + esc(ls) + '</span></div></div>';
+  }
+  var sum = '<p class="small" style="margin-bottom:6px">' + esc(t('sumAcross')) + '</p>' +
+    tiles(rv[0], avg, rv[rv.length - 1], L(NAMES[rows[0]]), t('sumAvgNote', { n: rows.length }), L(NAMES[rows[rows.length - 1]]));
+  var list = rows.map(function (m, i) {
+    var open = state.openMarket === m;
+    var head = '<button type="button" class="rate-row' + (i === 0 ? ' top' : '') + '" data-act="mkt" data-v="' + m + '" aria-expanded="' + open + '">' +
+      '<div><b>' + esc(L(NAMES[m])) + '</b><span class="small">' + esc(L(STATUS[m])) + '</span><span class="small">' + esc(t('src')) + ': ' + esc(L(SOURCE[m])) + '</span></div>' +
+      '<div class="rate-val num"><b>' + inrU(RATES[c][m]) + '</b><span class="small">' + esc(perUnit()) + '</span></div><span class="car" aria-hidden="true">▾</span></button>';
+    var detail = '';
+    if (open) {
+      var pr = priceRange(c, m);
+      var pos = pr.hi > pr.lo ? (pr.avg - pr.lo) / (pr.hi - pr.lo) * 100 : 50;
+      detail = '<div class="mkt-detail"><p class="label" style="margin:0 0 8px">' + esc(t('rangeAt', { m: L(NAMES[m]) })) + '</p>' +
+        tiles(pr.hi, pr.avg, pr.lo, perUnit(), perUnit(), perUnit()) +
+        '<div class="rng" aria-hidden="true"><i style="left:' + pos.toFixed(1) + '%"></i></div>' +
+        '<p class="note">' + esc(t('rangeNote')) + '</p></div>';
+    }
+    return '<li>' + head + detail + '</li>';
+  }).join('');
+  $('#rates').innerHTML = '<h2 class="label">' + esc(t('ratesTitle', { c: cropName(c) })) + '</h2>' + sum +
+    '<p class="note" style="margin-bottom:8px">' + esc(t('tapMarket')) + '</p><ul class="rate-list">' + list + '</ul>' +
+    '<p class="note" style="margin-top:8px">' + esc(t('ratesHint')) + '</p>';
+}
+function renderTabs() {
+  var tabs = [['compare', 'tabCompare'], ['trucks', 'tabTrucks'], ['buyers', 'tabBuyers'], ['advice', 'tabAdvice']];
+  $('#tablist').innerHTML = tabs.map(function (x) {
+    return '<button type="button" class="tab" role="tab" data-act="tab" data-v="' + x[0] + '" aria-selected="' + (state.tab === x[0]) + '">' + esc(t(x[1])) + '</button>';
+  }).join('');
+}
+
+function howBox(r) {
+  var seen = {};
+  var show = [r.high, r.best].filter(function (x) { if (seen[x.id]) return false; seen[x.id] = true; return true; });
+  var ex = show.map(function (x) {
+    return '<p class="num"><b>' + esc(L(NAMES[x.id])) + ':</b> ' + inr(x.gross) + ' − ' + inr(x.freight) + ' = <b>' + inr(x.net) + '</b></p>';
+  }).join('');
+  return '<details class="how" open><summary>' + esc(t('howTitle')) + '</summary><div class="body">' +
+    '<p class="formula">' + esc(t('howFormula')) + '</p>' +
+    '<ul><li>' + esc(t('howRank')) + '</li><li>' + esc(t('howBar')) + '</li><li>' + esc(t('howBook')) + '</li><li>' + esc(t('howFees')) + '</li></ul>' +
+    '<div class="ex"><span class="small">' + esc(t('howEx')) + ' · ' + esc(qtyLabel(state.qty)) + ' · ' + esc(cropName(state.crop)) + '</span>' + ex + '</div></div></details>';
+}
+function viewCompare() {
+  var r = compute(state.crop, state.district, state.qty, state.share);
+  var maxGross = Math.max.apply(null, r.rows.map(function (x) { return x.gross; }));
+  var delta = r.best.id === r.high.id
+    ? t('alsoHighest')
+    : t('moreThan', { x: inr(r.delta), m: L(NAMES[r.high.id]) });
+  var h = '<div class="hero"><p class="eyebrow">' + esc(t('bestFor')) + '</p><h2>' + esc(L(NAMES[r.best.id])) + '</h2>' +
+    '<p class="big"><b class="num">' + inr(r.best.net) + '</b><span>' + esc(t('takeHome', { q: qtyLabel(state.qty) })) + '</span></p>' +
+    '<p class="delta">' + esc(delta) + ' ' + esc(t('whyNet')) + '</p></div>';
+  h += howBox(r);
+  h += '<div class="legend"><span><i style="background:var(--good)"></i>' + esc(t('legNet')) + '</span><span><i style="background:var(--warn)"></i>' + esc(t('legFreight')) + '</span></div>';
+  h += '<ol class="list">' + r.rows.map(function (x, i) {
+    var badges = '';
+    if (i === 0) badges += '<span class="badge best">' + esc(t('badgeBest')) + '</span>';
+    if (x.id === r.high.id) badges += '<span class="badge high">' + esc(t('badgeHigh')) + '</span>';
+    var nW = (x.net / maxGross * 100).toFixed(1), fW = (x.freight / maxGross * 100).toFixed(1);
+    var action = x.id === 'vil'
+      ? '<span class="small">' + esc(t('localPickup')) + '</span>'
+      : '<button type="button" class="btn" data-act="book" data-v="' + x.id + '">' + ICON.truck + esc(t('bookTruck')) + '</button>';
+    return '<li class="card mk' + (i === 0 ? ' best' : '') + '">' +
+      '<div class="mk-head"><span class="rank num">' + (i + 1) + '</span><div class="mk-title"><h3>' + esc(L(NAMES[x.id])) + '</h3>' +
+      '<p class="mk-meta num">' + x.km + ' ' + esc(t('km')) + ' · ' + esc(L(STATUS[x.id])) + '</p>' +
+      (badges ? '<div class="badges">' + badges + '</div>' : '') + '</div></div>' +
+      '<div class="bar" role="img" aria-label="' + esc(t('lblNet') + ' ' + inr(x.net) + ', ' + t('lblFreight') + ' ' + inr(x.freight)) + '"><i class="n" style="width:' + nW + '%"></i><i class="f" style="width:' + fW + '%"></i></div>' +
+      '<dl class="stats num"><div><dt>' + esc(rateLbl()) + '</dt><dd>' + inrU(x.rate) + '</dd></div>' +
+      '<div><dt>' + esc(t('lblGross')) + '</dt><dd>' + inr(x.gross) + '</dd></div>' +
+      '<div><dt>' + esc(t('lblFreight')) + '</dt><dd>' + inr(x.freight) + '</dd></div>' +
+      '<div class="net"><dt>' + esc(t('lblNet')) + '</dt><dd>' + inr(x.net) + '</dd></div></dl>' +
+      '<div class="mk-foot"><span class="small">' + esc(t('src')) + ': ' + esc(L(SOURCE[x.id])) + ' · ' + esc(I.sampleBadge[state.lang === 'te' ? 1 : 0]) + '</span>' + action + '</div></li>';
+  }).join('') + '</ol>';
+  h += '<p class="note">' + esc(t('freightNote')) + '</p>';
+  return h;
+}
+
+function destId() {
+  if (state.dest && state.dest !== 'vil') return state.dest;
+  var r = compute(state.crop, state.district, state.qty, state.share);
+  return r.rows.filter(function (x) { return x.id !== 'vil'; })[0].id;
+}
+function viewTrucks() {
+  var dest = destId();
+  var quotes = truckQuotes(state.crop, state.district, dest, state.qty, state.share);
+  var feasible = quotes.filter(function (q) { return q.fits; }).sort(function (a, b) { return a.total - b.total; });
+  var cheapest = feasible.length ? feasible[0].t.id : null;
+  if (state.truck === null || !quotes.some(function (q) { return q.t.id === state.truck && q.fits; })) state.truck = cheapest;
+  var sel = quotes.filter(function (q) { return q.t.id === state.truck; })[0];
+  var km = ROUTES[state.district][dest][0];
+
+  if (state.booked) {
+    var b = state.booked;
+    var h = '<div class="ok"><h2>' + ICON.check + esc(t('booked')) + '</h2>' +
+      '<dl class="kv num"><dt>' + esc(t('ref')) + '</dt><dd>' + esc(b.ref) + '</dd>' +
+      '<dt>' + esc(t('route')) + '</dt><dd>' + esc(L(b.from)) + ' → ' + esc(L(NAMES[b.dest])) + '</dd>' +
+      '<dt>' + esc(t('crop')) + '</dt><dd>' + esc(t('loadLine', { q: qtyLabel(b.qty), c: cropName(b.crop) })) + '</dd>' +
+      '<dt>' + esc(t('truck')) + '</dt><dd>' + esc(L(b.name) + ' · ' + L(b.veh)) + '</dd>' +
+      '<dt>' + esc(b.share ? t('yourShare') : t('freightLbl')) + '</dt><dd>' + inr(b.total) + '</dd></dl>' +
+      '<p><b>' + esc(t('payTitle')) + ':</b> ' + esc(t('payNote')) + '</p>' +
+      '<p class="small">' + esc(t('bookedNote')) + '</p>' +
+      '<div><button type="button" class="btn ghost" data-act="rebook">' + esc(t('newBooking')) + '</button></div></div>';
+    return h;
+  }
+
+  var opts = MARKETS.filter(function (m) { return m !== 'vil'; }).map(function (m) {
+    return '<option value="' + m + '"' + (m === dest ? ' selected' : '') + '>' + esc(L(NAMES[m])) + '</option>';
+  }).join('');
+  var h2 = '<section class="card route"><h2 class="label" style="margin:0">' + esc(t('route')) + '</h2>' +
+    '<div class="route-line"><div><span class="small">' + esc(t('from')) + '</span><br><b>' + esc(t('fromVal', { d: distName() })) + '</b></div><span class="arrow" aria-hidden="true">→</span>' +
+    '<div class="field" style="flex:1 1 220px"><label class="small" for="dest">' + esc(t('to')) + '</label><select id="dest" data-field="dest">' + opts + '</select></div></div>' +
+    '<p class="small num">' + esc(t('loadLine', { q: qtyLabel(state.qty), c: cropName(state.crop) })) + ' · ' + km + ' ' + esc(t('km')) + '</p></section>';
+  h2 += '<h2 class="label" style="margin:0">' + esc(t('nearby')) + '</h2><div class="list" role="radiogroup" aria-label="' + esc(t('nearby')) + '">' + quotes.map(function (q) {
+    var checked = q.t.id === state.truck;
+    var tag = q.t.id === cheapest ? '<span class="badge best">' + esc(t('lowest')) + '</span>' : '';
+    var msg = q.fits ? '' : '<p class="small" style="color:var(--warn);font-weight:700">' + esc(t('tooSmall', { q: qtyLabel(state.qty) })) + '</p>';
+    return '<div class="card tk" role="radio" tabindex="0" data-act="pick" data-v="' + q.t.id + '" aria-checked="' + checked + '" aria-disabled="' + (!q.fits) + '">' +
+      '<div class="tk-head"><div><h3>' + esc(L(q.t.name)) + ' · ' + esc(L(q.t.veh)) + '</h3>' +
+      '<p class="mk-meta num">' + esc(t('capacity')) + ' ' + esc(capText(q.t.cap)) + ' · ' + q.t.km + ' ' + esc(t('km')) + ' ' + esc(t('away')) + '</p>' +
+      '<p class="ver">' + ICON.shield + esc(t('verified')) + '</p></div>' +
+      '<div class="price num"><b>' + inr(q.total) + '</b><span class="small">' + inrU(q.perQ) + ' ' + esc(perUnit()) + '</span></div></div>' +
+      (tag ? '<div class="badges">' + tag + '</div>' : '') + msg + '</div>';
+  }).join('') + '</div>';
+  h2 += '<section class="card confirm"><p class="small">' + esc(state.share ? t('yourShare') : t('total')) + '</p>' +
+    '<p class="num" style="font-family:var(--font-display);font-size:26px;font-weight:700">' + (sel ? inr(sel.total) : '—') + '</p>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px">' +
+    '<button type="button" class="btn" data-act="confirm"' + (sel ? '' : ' disabled') + '>' + ICON.truck + esc(t('confirmOnline')) + '</button>' +
+    '<button type="button" class="btn ghost" data-act="call"' + (sel ? '' : ' disabled') + '>' + esc(t('callOwner')) + '</button></div>' +
+    (state.called && sel ? '<p class="small">' + esc(t('demoPhone')) + ': <span class="phone num">90000 0' + sel.t.id.charCodeAt(0) + '0' + sel.t.id.charAt(1) + '</span> <button type="button" class="btn ghost" style="min-height:36px;padding:4px 12px" data-act="copy">' + esc(state.copied ? t('copied') : t('copy')) + '</button></p>' : '') +
+    '</section>';
+  return h2;
+}
+
+function viewBuyers() {
+  var type = state.buyerType;
+  var list = BUYERS.filter(function (b) { return b.type === type && b.crop === state.crop; });
+  var h = '<div class="subtabs">' + ['society', 'restaurant'].map(function (x) {
+    return '<button type="button" class="subtab" data-act="btype" data-v="' + x + '" aria-pressed="' + (type === x) + '">' + esc(t(x)) + '</button>';
+  }).join('') + '</div>';
+  h += '<p class="note">' + esc(t(type === 'society' ? 'introSociety' : 'introRestaurant')) + '</p>';
+  if (!list.length) return h + '<div class="empty">' + esc(t('noBuyers', { c: cropName(state.crop) })) + '</div>';
+  h += '<div class="list">' + list.map(function (b) {
+    var plus = b.price - RATES[b.crop].vil;
+    var done = state.offered[b.id];
+    return '<div class="card by"><div class="by-top"><div><h3>' + esc(L(b.name)) + ' · ' + esc(L(b.place)) + '</h3>' +
+      '<p class="mk-meta">' + esc(L(b.demand)) + '</p></div>' +
+      '<div class="price num"><b>' + inrU(b.price) + '</b><span class="small">' + esc(perUnit()) + '</span></div></div>' +
+      '<p class="plus num">' + esc(t('vsTrader', { x: inrU(plus), u: perUnit() })) + '</p>' +
+      '<div class="mk-foot"><span class="small">' + esc(t('sampleBuyer')) + '</span>' +
+      (done ? '<span class="ver">' + ICON.shield + esc(t('offered')) + '</span>' : '<button type="button" class="btn" data-act="offer" data-v="' + b.id + '">' + esc(t('offerBtn')) + '</button>') +
+      '</div></div>';
+  }).join('') + '</div>';
+  return h;
+}
+
+function viewAdvice() {
+  var sc = adviceScores(state.district);
+  var top = sc[0];
+  function risk(g) { return g < 35 ? ['low', 'low'] : g < 60 ? ['med', 'med'] : ['high', 'high']; }
+  var h = '<section class="rec"><p class="eyebrow" style="color:var(--primary)">' + esc(t('adviceWhy')) + '</p><h2>' + esc(t('adviceTitle', { d: distName() })) + '</h2>' +
+    '<p class="num" style="font-family:var(--font-display);font-size:30px;font-weight:700">' + esc(cropName(top.crop)) + '</p>' +
+    '<p class="small num">' + esc(t('score', { s: top.score })) + ' · ' + esc(t('glut')) + ': ' + esc(t(risk(top.glut)[0])) + '</p></section>';
+  h += '<section class="card"><h2 class="label">' + esc(t('allCrops', { d: distName() })) + '</h2>' + sc.map(function (x) {
+    var rk = risk(x.glut);
+    return '<div class="crop-row"><div><p class="nm">' + esc(cropName(x.crop)) + '</p>' +
+      '<p class="small num">' + esc(t('stability')) + ' ' + x.stab + ' · ' + esc(t('score', { s: x.score })) + '</p></div>' +
+      '<span class="risk ' + rk[1] + '">' + esc(t('glut')) + ': ' + esc(t(rk[0])) + '</span></div>';
+  }).join('') + '</section>';
+  var byMargin = sc.map(function (x) { return x.crop; }).sort(function (a, b) { return MARGIN[b] - MARGIN[a]; });
+  h += '<section class="card"><h2 class="label">' + esc(t('marginChart')) + '</h2><div style="display:grid;gap:10px">' + byMargin.map(function (c) {
+    return '<div class="mbar' + (c === top.crop ? ' top' : '') + '"><span>' + esc(cropName(c)) + '</span><span class="track"><i style="width:' + (MARGIN[c] / 40 * 100) + '%"></i></span><b class="num">' + MARGIN[c] + '</b></div>';
+  }).join('') + '</div></section>';
+  h += '<div class="callout">' + esc(t('glutText')) + '</div><p class="note">' + esc(t('scoreNote')) + '</p>';
+  return h;
+}
+
+function renderView() {
+  var v = state.tab === 'trucks' ? viewTrucks() : state.tab === 'buyers' ? viewBuyers() : state.tab === 'advice' ? viewAdvice() : viewCompare();
+  $('#view').innerHTML = v;
+}
+function renderAll() { renderChips(); renderRates(); renderTabs(); renderView(); }
+function resetBooking() { state.booked = null; state.called = false; state.copied = false; }
+
+function setCrop(c) {
+  state.crop = c; state.truck = null; resetBooking(); renderChips(); renderRates(); renderView();
+}
+function matchCrop(txt) {
+  var s = String(txt || '').toLowerCase().trim();
+  if (s.length < 2) return null;
+  var ids = Object.keys(CROPS);
+  for (var i = 0; i < ids.length; i++) {
+    var al = CROPS[ids[i]].al;
+    for (var j = 0; j < al.length; j++) {
+      var a = al[j].toLowerCase();
+      if (a.indexOf(s) === 0 || s.indexOf(a) !== -1) return ids[i];
+    }
+  }
+  return null;
+}
+function say(msg) { $('#vstatus').textContent = msg; }
+function startVoice() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { say(t('vUnsupported')); return; }
+  var mic = $('#mic');
+  try {
+    var r = new SR();
+    r.lang = state.lang === 'te' ? 'te-IN' : 'en-IN';
+    r.interimResults = false;
+    r.maxAlternatives = 3;
+    say(t('vListening'));
+    mic.classList.add('live');
+    r.onresult = function (e) {
+      var txt = Array.prototype.map.call(e.results[0], function (a) { return a.transcript; }).join(' ');
+      $('#q').value = txt;
+      var id = matchCrop(txt);
+      if (id && cropsHere().indexOf(id) >= 0) { setCrop(id); say(t('vSelected', { c: cropName(id) })); } else if (id) { say(t('vNotHere', { c: cropName(id), d: distName() })); } else { say(t('vNoMatch')); }
+    };
+    r.onerror = function () { say(t('vUnsupported')); mic.classList.remove('live'); };
+    r.onend = function () { mic.classList.remove('live'); };
+    r.start();
+  } catch (err) { say(t('vUnsupported')); mic.classList.remove('live'); }
+}
+function setQty(n, typing) {
+  var mul = state.unit === 'kg' ? 0.01 : 1;
+  var requested = (Number(n) || 0) * mul;
+  var q = Math.round(Math.max(0.1, Math.min(40, requested)) * 100) / 100;
+  state.qty = q; state.truck = null; resetBooking();
+  if (!typing || Math.abs(requested - q) > 0.0001) $('#qty').value = qtyIn();
+  renderView();
+}
+function stepQty(dir) {
+  var cur = qtyIn();
+  var step = state.unit === 'kg' ? (cur >= 100 ? 50 : 10) : (cur > 1 ? 1 : 0.1);
+  setQty(cur + dir * step);
+}
+function setUnit(u) {
+  state.unit = u;
+  document.querySelectorAll('[data-act="unit"]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === u)); });
+  $('#qty').value = qtyIn();
+  resetBooking();
+  renderRates();
+  renderView();
+}
+function goTrucks() {
+  state.tab = 'trucks'; renderTabs(); renderView();
+  var el = $('#tabs');
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+}
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-act]');
+  if (!b) return;
+  var a = b.dataset.act, v = b.dataset.v;
+  if (a === 'lang') { state.lang = v; try { localStorage.setItem('sm-lang', v); } catch (_) {} applyStatic(); say(''); renderAll(); }
+  else if (a === 'crop') {
+    $('#q').value = ''; say(''); setCrop(v);
+    if (window.innerWidth < 860) {
+      var calm2 = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var rt = $('#rates');
+      if (rt && rt.scrollIntoView) rt.scrollIntoView({ behavior: calm2 ? 'auto' : 'smooth', block: 'nearest' });
+    }
+  }
+  else if (a === 'tab') { state.tab = v; renderTabs(); renderView(); }
+  else if (a === 'qminus') stepQty(-1);
+  else if (a === 'qplus') stepQty(1);
+  else if (a === 'unit') setUnit(v);
+  else if (a === 'mic') startVoice();
+  else if (a === 'book') { state.dest = v; state.truck = null; resetBooking(); goTrucks(); }
+  else if (a === 'pick') { if (b.getAttribute('aria-disabled') !== 'true') { state.truck = v; state.called = false; renderView(); } }
+  else if (a === 'confirm') {
+    var d = destId();
+    var q = truckQuotes(state.crop, state.district, d, state.qty, state.share).filter(function (x) { return x.t.id === state.truck; })[0];
+    if (!q) return;
+    var ref = 'SM-' + (Date.now() % 100000).toString().padStart(5, '0');
+    state.booked = { ref: ref, from: ['Example village, ' + DISTRICTS[state.district][0], 'ఉదాహరణ గ్రామం, ' + DISTRICTS[state.district][1]], dest: d, qty: state.qty, crop: state.crop, name: q.t.name, veh: q.t.veh, total: q.total, share: state.share };
+    renderView();
+  }
+  else if (a === 'call') { state.called = true; state.copied = false; renderView(); }
+  else if (a === 'copy') {
+    var ph = $('.phone');
+    if (!ph) return;
+    var txt = ph.textContent;
+    try {
+      navigator.clipboard.writeText(txt).then(function () { state.copied = true; renderView(); }, function () {
+        var rg = document.createRange(); rg.selectNodeContents(ph); var s = window.getSelection(); s.removeAllRanges(); s.addRange(rg);
+      });
+    } catch (_) {
+      var rg2 = document.createRange(); rg2.selectNodeContents(ph); var s2 = window.getSelection(); s2.removeAllRanges(); s2.addRange(rg2);
+    }
+  }
+  else if (a === 'rebook') { resetBooking(); renderView(); }
+  else if (a === 'mkt') { state.openMarket = state.openMarket === v ? null : v; renderRates(); }
+  else if (a === 'district') setDistrict(v);
+  else if (a === 'btype') { state.buyerType = v; renderView(); }
+  else if (a === 'offer') { state.offered[v] = true; renderView(); }
+});
+document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.tk[data-act="pick"]')) { e.preventDefault(); e.target.click(); }
+});
+$('#qty').addEventListener('input', function () { var n = Number(this.value); var mul = state.unit === 'kg' ? 0.01 : 1; if (n * mul >= 0.1) setQty(n, true); });
+$('#qty').addEventListener('change', function () { setQty(this.value); });
+$('#share').addEventListener('change', function () { state.share = this.checked; state.truck = null; resetBooking(); renderView(); });
+$('#q').addEventListener('input', function () {
+  var v = this.value.trim();
+  if (!v) { say(''); return; }
+  var id = matchCrop(v);
+  if (id && cropsHere().indexOf(id) >= 0) { say(t('vSelected', { c: cropName(id) })); if (id !== state.crop) setCrop(id); } else if (id) { say(t('vNotHere', { c: cropName(id), d: distName() })); } else { say(t('vNone')); }
+});
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'dest') { state.dest = e.target.value; state.truck = null; resetBooking(); renderView(); }
+});
+
+try { var saved = localStorage.getItem('sm-lang'); if (saved === 'te' || saved === 'en') state.lang = saved; } catch (_) {}
+applyStatic();
+renderAll();
+</script>
+
+</body></html>
